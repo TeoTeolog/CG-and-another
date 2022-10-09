@@ -1,9 +1,35 @@
 import random
-from tkinter import *
 from myKinter import *
 
 root = Tk()
 SPACE = 22
+
+
+class State:
+
+    def __init__(self):
+        self.pointQueue = ['first', 'second', 'third', 'center']
+        self.existPointList = []
+        self.curPointNum = 0
+        self.curPoint = self.pointQueue[self.curPointNum]
+        self.linesList = []
+        self.textCorner = StringVar()
+
+    def addLine(self, lineName):
+        self.linesList.append(lineName)
+
+    def removeLine(self, lineName):
+        if lineName in self.linesList:
+            self.linesList.remove(lineName)
+
+    def nextPoint(self):
+        self.curPointNum = (self.curPointNum + 1) % len(self.pointQueue)
+        self.existPointList.append(self.curPoint)
+        self.curPoint = self.pointQueue[self.curPointNum]
+
+    def setCurPoint(self, name):
+        self.curPoint = name
+        self.curPointNum = self.pointQueue.index(name)
 
 
 def rotateCords(t, pointCords, centerCords, mode='rect'):
@@ -128,6 +154,7 @@ def SpeedUP(event):
 def SpeedDown(event):
     myRoot.setTimeStep(myRoot.getTimeStep() + 5)
 
+
 def App():
     myDC.setOnClick(clickHandler)
 
@@ -143,8 +170,7 @@ def App():
     buttonDown.onClick(SpeedDown)
     myBtnField.addObject(buttonDown)
 
-    rotateControlEdit = Entry(width=50, textvariable=state.textCorner)
-    rotateControlEdit.pack()
+    rotateControlEdit = MyEdit(cords=Cords([30, 210, 100, 30]), textvariable=state.textCorner)
 
     def key(event):
         print("pressed", repr(event.char))

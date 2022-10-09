@@ -74,6 +74,60 @@ class Cords:
         self.x0y0 = [self.x, self.y]
 
 
+class MyCanvas:
+
+    def __init__(self, cords):
+        self.cords = cords
+        self.objectArray = {}
+        self.rectangle = createRectangle(_root.canvas, cords, "gray")
+        self.name = str(cords.x)
+
+    @staticmethod
+    def checkCords(cords, rectangleCords):
+        if rectangleCords.x + rectangleCords.width > cords.x > rectangleCords.x \
+                and rectangleCords.y + rectangleCords.height > cords.y > rectangleCords.y:
+            return True
+        return False
+
+    def clicked(self, event):
+        print(event)
+
+    def setColor(self, color, time=1):
+        setFill(_root.canvas, time, self.rectangle, color)
+
+
+class ButtonField(MyCanvas):
+
+    def addObject(self, object):
+        self.objectArray[object.name] = object
+
+    def clicked(self, event):
+        for i in self.objectArray.values():
+            if self.checkCords(event, i.cords):
+                i.clicked(event)
+
+
+class DrowingCanvas(ButtonField):
+
+    def __init__(self, cords):
+        super().__init__(cords)
+        self.onClickEvent = None
+
+    def setOnClick(self, event):
+        self.onClickEvent = event
+
+    def clicked(self, e):
+        for i in self.objectArray.values():
+            if self.checkCords(e, i.cords) and i.onClickEvent:
+                i.clicked(e)
+                return i
+        event = Event(e)
+        event.canvasPressed = self
+        if self.onClickEvent:
+            self.onClickEvent(event)
+        return None
+
+
 class Button:
 
     def __init__(self, cords, name, text=None, color='green'):
@@ -144,82 +198,39 @@ class Line:
         deleteObjFromCanvas(_root.canvas, self.line)
 
 
-class MyCanvas:
+class Lable:
 
-    def __init__(self, cords):
-        self.cords = cords
-        self.objectArray = {}
-        self.rectangle = createRectangle(_root.canvas, cords, "gray")
-        self.name = str(cords.x)
-
-    @staticmethod
-    def checkCords(cords, rectangleCords):
-        if rectangleCords.x + rectangleCords.width > cords.x > rectangleCords.x \
-                and rectangleCords.y + rectangleCords.height > cords.y > rectangleCords.y:
-            return True
-        return False
-
-    def clicked(self, event):
-        print(event)
-
-    def setColor(self, color, time=1):
-        setFill(_root.canvas, time, self.rectangle, color)
-
-
-class ButtonField(MyCanvas):
-
-    def addObject(self, object):
-        self.objectArray[object.name] = object
-
-    def clicked(self, event):
-        for i in self.objectArray.values():
-            if self.checkCords(event, i.cords):
-                i.clicked(event)
-
-
-class DrowingCanvas(ButtonField):
-
-    def __init__(self, cords):
-        super().__init__(cords)
+    def __init__(self, cords, name, color='green'):
         self.onClickEvent = None
+        self.name = name
+        self.color = color
+        self.cords = cords
+        self.line = createLine(_root.canvas, cords, color)
 
-    def setOnClick(self, event):
+    def onClick(self, event):
         self.onClickEvent = event
 
     def clicked(self, e):
-        for i in self.objectArray.values():
-            if self.checkCords(e, i.cords) and i.onClickEvent:
-                i.clicked(e)
-                return i
         event = Event(e)
-        event.canvasPressed = self
+        event.btnPressed = self
         if self.onClickEvent:
             self.onClickEvent(event)
-        return None
+
+    def moveIt(self, cords, time=1):
+        self.cords = cords
+        moveFigeure(_root.canvas, time, self.line, self.cords.x0y0x1y1)
+
+    def __del__(self):
+        deleteObjFromCanvas(_root.canvas, self.line)
 
 
-class State:
+class MyEdit:
 
-    def __init__(self):
-        self.pointQueue = ['first', 'second', 'third', 'center']
-        self.existPointList = []
-        self.curPointNum = 0
-        self.curPoint = self.pointQueue[self.curPointNum]
-        self.linesList = []
-        self.textCorner = StringVar()
+    def __init__(self, cords, textvariable):
+        self.editObject = Entry(textvariable=textvariable)
+        _root.canvas.create_window(cords.x + cords.width // 2, cords.y + cords.height // 2,
+                                    window=self.editObject, height=cords.height, width=cords.width)
 
-    def addLine(self, lineName):
-        self.linesList.append(lineName)
-
-    def removeLine(self, lineName):
-        if lineName in self.linesList:
-            self.linesList.remove(lineName)
-
-    def nextPoint(self):
-        self.curPointNum = (self.curPointNum + 1) % len(self.pointQueue)
-        self.existPointList.append(self.curPoint)
-        self.curPoint = self.pointQueue[self.curPointNum]
-
-    def setCurPoint(self, name):
-        self.curPoint = name
-        self.curPointNum = self.pointQueue.index(name)
+    # maybe I will imagen some functional for this
+    def pack(self):
+        pass
