@@ -23,8 +23,8 @@ class Root:
 
 # _root = Root(None, None)
 #
-def createLine(canvas, cords, color):
-    return canvas.create_line(cords.x0y0x1y1, fill=color)
+def createLine(canvas, cords, **options):
+    return canvas.create_line(cords.x0y0x1y1, options)
 
 #
 def createRectangle(canvas, cords, color):
@@ -106,12 +106,30 @@ class ButtonField(MyCanvas):
             if self.checkCords(event, i.cords):
                 i.clicked(event)
 
+GRID_STEP = 20
 
 class DrowingCanvas(ButtonField):
 
     def __init__(self, cords):
         super().__init__(cords)
         self.onClickEvent = None
+        self.rectangle = createRectangle(_root.canvas, cords, '#eeeeee')
+        # рисуем сетку
+        for i in range(cords.width//GRID_STEP):
+            createLine(_root.canvas, Cords([cords.x + GRID_STEP * i, cords.y, 0, cords.height]),
+                       fill='#bcbcbc')
+            _root.canvas.create_text(cords.x + GRID_STEP * i + 5, cords.y1 - GRID_STEP//2, text=i-1)
+
+        for i in range(cords.height//GRID_STEP):
+            createLine(_root.canvas, Cords([cords.x, cords.y1 - GRID_STEP * i, cords.width,0]),
+                       fill='#bcbcbc')
+            _root.canvas.create_text(cords.x + GRID_STEP//2, cords.y1 - GRID_STEP * i + 5, text=i - 1)
+
+        self.Oy = createLine(_root.canvas,
+                             Cords([cords.x + GRID_STEP, cords.y + GRID_STEP, 0, cords.height - GRID_STEP]),
+                             fill='black', arrow=FIRST)
+        self.Ox = createLine(_root.canvas, Cords([cords.x, cords.y1 - GRID_STEP, cords.width - GRID_STEP, 0]),
+                             fill='black', arrow=LAST)
 
     def setOnClick(self, event):
         self.onClickEvent = event
@@ -127,6 +145,20 @@ class DrowingCanvas(ButtonField):
             self.onClickEvent(event)
         return None
 
+    def calculateCords(self, x, y):
+        resX = (x + 1) * GRID_STEP + self.cords.x - 2
+        resY = self.cords.y1 - (y + 1) * GRID_STEP - 2
+        return [resX,resY]
+
+    def calculateNearCords(self, x, y):
+        resX = round((x - self.cords.x) / GRID_STEP) - 1
+        resY = round((self.cords.y + self.cords.height - y) / GRID_STEP) - 1
+        return self.calculateCords(resX, resY)
+
+    def calculateXYbyCords(self, x, y):
+        resX = (x - self.cords.x) / GRID_STEP - 1
+        resY = (self.cords.y + self.cords.height - y) / GRID_STEP - 1
+        return [resX,resY]
 
 class Button:
 
@@ -150,8 +182,9 @@ class Button:
     def clearChildList(self):
         self.childList = []
 
-    def onClick(self, event):
+    def onClick(self, event, **eventArgs):
         self.onClickEvent = event
+        self.eventArgs = eventArgs
 
     def moveIt(self, cords, time=1):
         self.cords = cords
@@ -163,8 +196,12 @@ class Button:
         event.btnPressed = self
         setFill(_root.canvas, 1, self.rectangle, 'yellow')
         setFill(_root.canvas, 4, self.rectangle, self.color)
+        print( self.eventArgs)
         if self.onClickEvent:
-            self.onClickEvent(event)
+            if self.eventArgs:
+                self.onClickEvent(event, self.eventArgs)
+            else:
+                self.onClickEvent(event)
 
     def __del__(self):
         self.clearChildList()
@@ -179,7 +216,7 @@ class Line:
         self.name = name
         self.color = color
         self.cords = cords
-        self.line = createLine(_root.canvas, cords, color)
+        self.line = createLine(_root.canvas, cords, fill=color)
 
     def onClick(self, event):
         self.onClickEvent = event
@@ -200,12 +237,12 @@ class Line:
 
 class Lable:
 
-    def __init__(self, cords, name, color='green'):
+    def __init__(self, cords, text, name=None, color='black'):
         self.onClickEvent = None
         self.name = name
         self.color = color
         self.cords = cords
-        self.line = createLine(_root.canvas, cords, color)
+        self.text = _root.canvas.create_text(cords.x + cords.width / 2, cords.y + cords.height / 2, text=text, fill=color)
 
     def onClick(self, event):
         self.onClickEvent = event
@@ -218,10 +255,10 @@ class Lable:
 
     def moveIt(self, cords, time=1):
         self.cords = cords
-        moveFigeure(_root.canvas, time, self.line, self.cords.x0y0x1y1)
+        moveFigeure(_root.canvas, time, self.text, self.cords.x0y0x1y1)
 
-    def __del__(self):
-        deleteObjFromCanvas(_root.canvas, self.line)
+    # def __del__(self):
+    #     deleteObjFromCanvas(_root.canvas, self.text)
 
 
 class MyEdit:
