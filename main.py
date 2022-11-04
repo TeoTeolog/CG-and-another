@@ -234,7 +234,7 @@ def secondLab():
 
     state = State()
     step = np.arange(0, 1, 0.001)
-    state.pointList = np.array([[0, 0], [2, 8], [5, 10]])
+    state.pointList = np.array([[0, 0], [3, 5], [4, 10]])
     for i in state.pointList:
         createPoint(i[0], i[1])
 
