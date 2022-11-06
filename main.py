@@ -18,6 +18,8 @@ class State:
         self.xValue = StringVar()
         self.yValue = StringVar()
         self.pointList = None
+        self.linePoints = []
+        self.lastPoint = []
 
     def addLine(self, lineName):
         self.linesList.append(lineName)
@@ -204,20 +206,30 @@ def secondLab():
     myBtnField.addObject(myDC)
 
     def createDot(x, y, color='red', width=5):
-        myRoot.canvas.create_oval(x, y, x + width, y + width, width=0,
+        return myRoot.canvas.create_oval(x, y, x + width, y + width, width=0,
                                   fill=color)
 
     def createPoint(x, y, color='red', width=5):
-        cords = myDC.calculateCords(x, y)
-        createDot(cords[0], cords[1], color, width)
-        return [x, y]
+        cords = myDC.calculateCordsByXY(x, y)
+        return createDot(cords[0], cords[1], color, width)
+
+    def createDotLine(first, second):
+        if first:
+            return Line(Cords([first[0], first[1], second[0], second[1]], 'x1y1'),
+                        'line' + str(first[0]) + str(second[0]), 'red')
+        else:
+            return None
 
     def calculate(step, points):
+        pointCords = myDC.calculateCordsByXY(points[-1][0], points[-1][1])
+        state.linesList.append(createDotLine(state.lastPoint, pointCords))
+        state.lastPoint = pointCords
+
+        for i in state.linePoints:
+            myRoot.canvas.delete(i)
         for t in step:
             pointCords = calculatePoint(t, points)
-            print('{\npointCords, pointCords[0], pointCords[1] :\n', pointCords,
-                  pointCords[0], pointCords[1], '\n}\n', 't :', t)
-            createPoint(pointCords[0], pointCords[1], width=1, color='#9fc5e8')
+            state.linePoints.append(createPoint(pointCords[0], pointCords[1], width=1, color='#9fc5e8'))
 
     def calculatePoint(t, points):
         newPoints = points
@@ -238,12 +250,18 @@ def secondLab():
     for i in state.pointList:
         createPoint(i[0], i[1])
 
+    for i in state.pointList:
+        pointCords = myDC.calculateCordsByXY(i[0], i[1])
+        state.linesList.append(createDotLine(state.lastPoint, pointCords))
+        state.lastPoint = pointCords
+
     calculate(step, state.pointList)
 
     def clickHandler(event):
-        newPoint = myDC.calculateNearCords(event.cords.x, event.cords.y)
-        createDot(newPoint[0], newPoint[1], 'green')
-        temp = [myDC.calculateXYbyCords(newPoint[0], newPoint[1])]
+
+        createDot(event.cords.x, event.cords.y, 'green')
+
+        temp = [myDC.calculateXYbyCords(event.cords.x, event.cords.y)]
         tempPointList = np.append(state.pointList, temp, axis=0)
         state.pointList = tempPointList
         state.xValue.set('')
@@ -251,8 +269,9 @@ def secondLab():
         calculate(step, state.pointList)
 
     def addHandler(event):
-        temp = [createPoint(int(state.xValue.get()), int(state.yValue.get()))]
-        tempPointList = np.append(state.pointList, temp, axis=0)
+        temp = [float(state.xValue.get()), float(state.yValue.get())]
+        createPoint(temp[0], temp[1])
+        tempPointList = np.append(state.pointList, [temp], axis=0)
         state.pointList = tempPointList
         state.xValue.set('')
         state.yValue.set('')

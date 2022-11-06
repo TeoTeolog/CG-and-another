@@ -145,9 +145,9 @@ class DrowingCanvas(ButtonField):
             self.onClickEvent(event)
         return None
 
-    def calculateCords(self, x, y):
-        resX = (x + 1) * GRID_STEP + self.cords.x - 2
-        resY = self.cords.y1 - (y + 1) * GRID_STEP - 2
+    def calculateCordsByXY(self, x, y):
+        resX = (x + 1) * GRID_STEP + self.cords.x
+        resY = self.cords.y1 - (y + 1) * GRID_STEP
         return [resX,resY]
 
     def calculateNearCords(self, x, y):
