@@ -133,8 +133,15 @@ def zRotateMatrix(a):
         [0, 0, 1]
     ])
 
-def calculatePlotCords(cords):
-    a = 35
+def rotate3D(point, a, mode='x'):
+    if mode=='x':
+        return point.dot(xRotateMatrix(a))
+    elif mode=='y':
+        return point.dot(yRotateMatrix(a))
+    elif mode=='z':
+        return point.dot(zRotateMatrix(a))
+
+def calculatePlotCords(cords, a):
     temp = cords.dot(yRotateMatrix(a))
     temp = temp.dot(xRotateMatrix(-1 * a))
     return [temp[0],temp[1]]
@@ -149,6 +156,7 @@ class DrowingCanvas(ButtonField):
         self.cords = cords
         self.rectangle = createRectangle(_root.canvas, cords, '#eeeeee')
         self.startDot = [cords.x, cords.y1]
+        self.angle = 0
 
     def displayGrid(self):
         cords = self.cords
@@ -183,32 +191,37 @@ class DrowingCanvas(ButtonField):
             n = n[0] + '0' * (7 - len(n)) + n[1:]
         return n
 
-    def create3DLine(self, start_point, end_point, color='black', arrow=None):
-        plotCordsB = calculatePlotCords(start_point)
-        plotCordsE = calculatePlotCords(end_point)
+    def create3DLine(self, start_point, end_point, color='black', arrow=None, width = 1):
+        plotCordsB = calculatePlotCords(start_point, self.angle)
+        plotCordsE = calculatePlotCords(end_point, self.angle)
         return  createLine(_root.canvas,
                    Cords([self.startDot[0] + plotCordsB[0] * GRID_STEP, self.startDot[1] - plotCordsB[1] * GRID_STEP,
                           self.startDot[0] + plotCordsE[0] * GRID_STEP, self.startDot[1] - plotCordsE[1] * GRID_STEP],
                          mode='x1y1'),
-                   fill=color, arrow=arrow)
+                   fill=color, arrow=arrow, width=width)
 
-    def displayGrid3D(self):
+    def deleteLine(self, line):
+        deleteObjFromCanvas(_root.canvas, line)
+
+    def displayGrid3D(self, angle=35, mode='visible'):
+        self.angle = angle
         cords = self.cords
         endpoint = 15
         XYZ = np.array([[endpoint, 0, 0], [0, endpoint, 0], [0, 0, endpoint]])
         self.startDot=[cords.x + GRID_STEP * 12, cords.y1 - GRID_STEP * 13]
         sample = [[1,0,0],[0,1,0],[0,0,1]]
-        for k in sample:
-            for j in sample:
-                for i in range(1, endpoint):
-                    if j!=k:
-                        tempB = np.array([i * j[0], i * j[1], i * j[2]])
-                        tempE = np.array([i * j[0] + k[0] * endpoint, i * j[1] + k[1] * endpoint, i * j[2] + k[2] * endpoint])
-                        self.create3DLine(tempB, tempE, color='#bcbcbc')
-        for i in XYZ:
-            plotCords = calculatePlotCords(i)
-            self.create3DLine(np.array([0, 0, 0]), i, arrow=LAST)
-            _root.canvas.create_text(self.startDot[0] + plotCords[0] * GRID_STEP, self.startDot[1] - plotCords[1] * GRID_STEP, text=i)
+        if mode=='visible':
+            for k in sample:
+                for j in sample:
+                    for i in range(1, endpoint):
+                        if j!=k:
+                            tempB = np.array([i * j[0], i * j[1], i * j[2]])
+                            tempE = np.array([i * j[0] + k[0] * endpoint, i * j[1] + k[1] * endpoint, i * j[2] + k[2] * endpoint])
+                            self.create3DLine(tempB, tempE, color='#bcbcbc')
+            for i in XYZ:
+                plotCords = calculatePlotCords(i, self.angle)
+                self.create3DLine(np.array([0, 0, 0]), i, arrow=LAST)
+                _root.canvas.create_text(self.startDot[0] + plotCords[0] * GRID_STEP, self.startDot[1] - plotCords[1] * GRID_STEP, text=i)
 
     def setOnClick(self, event):
         self.onClickEvent = event
@@ -246,9 +259,13 @@ class DrowingCanvas(ButtonField):
         cords = self.calculateCordsByXY(x, y)
         return self.createDot(cords[0], cords[1], color, width)
 
+    def __specCreatePoint__(self, x, y, color='red', width=5):
+        cords = self.calculateCordsByXY(x - 1, y - 1)
+        return self.createDot(cords[0], cords[1], color, width)
+
     def create3DPoint(self, cords, color='red', width=5):
-        res_cords = calculatePlotCords(cords)
-        return self.createPoint(res_cords[0], res_cords[1], color, width)
+        res_cords = calculatePlotCords(cords, self.angle)
+        return self.__specCreatePoint__(res_cords[0], res_cords[1], color, width)
 
 class Button:
 

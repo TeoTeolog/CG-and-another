@@ -1,4 +1,5 @@
 import random
+import time
 from myKinter import *
 
 root = Tk()
@@ -423,6 +424,7 @@ def thirdLab():
 
     # i can concatinate dots into figure and figure into dificult stucture
 
+
 def forthLab():
     c = Canvas(root, width=30 * SPACE + 100, height=500, bg='white')
     myRoot = Root(root, c)
@@ -534,5 +536,105 @@ def forthLab():
     c.pack()
 
 
-forthLab()
+def fifthLab():
+
+    cubePoint = np.array([[-5, -5, -5], [5, -5, -5], [5, 5, -5], [-5, 5, -5],
+                          [-5, -5, 5], [5, -5, 5], [5, 5, 5], [-5, 5, 5]], np.float)  # figure
+
+    faces = np.array([[0, 1, 2, 3], [5, 4, 7, 6], [4, 0, 3, 7], [1, 5, 6, 2], [4, 5, 1, 0], [3, 2, 6, 7]])
+
+    def cross(a, b):
+        return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
+
+    def createDotLine(first, second):
+        return myDC.create3DLine(first, second, color='red', width=3)
+
+    def createFace(points):
+        b, a, d, c = points[0], points[1], points[2], points[3]
+        state.linesList.append(createDotLine(a, b))
+        state.linesList.append(createDotLine(b, c))
+        state.linesList.append(createDotLine(c, d))
+        state.linesList.append(createDotLine(a, d))
+
+    def createOutline(points):
+        a, b, c, d = points[0], points[1], points[2], points[3]
+
+        v1 = b[0] - a[0], b[1] - a[1], b[2] - a[2]
+        v2 = c[0] - a[0], c[1] - a[1], c[2] - a[2]
+        n = cross(v1, v2)
+        if n[2] < 0:
+            return
+        else:
+            coords = np.array([b, a, d, c])
+            createFace(coords)
+
+    def render(points, faces):
+        clearFigure()
+        coords = []
+        for point in points:
+            coords.append(point)
+        for face in faces:
+            createOutline((coords[face[0]], coords[face[1]], coords[face[2]], coords[face[3]]))
+
+    def clearFigure():
+        for i in state.linesList:
+            myDC.deleteLine(i)
+        state.linesList.clear()
+
+    #///////////////////////////////////////////////////////////////////////////
+
+    c = Canvas(root, width=40 * SPACE, height=800, bg='white')
+    myRoot = Root(root, c)
+    myRoot.setRoot()
+
+    myBtnField = ButtonField(Cords([0, 0, 40 * SPACE, 800]))
+    myDC = DrowingCanvas(Cords([1 * SPACE, 200, 25 * SPACE, 550]))
+    myDC.displayGrid3D(0, mode='hide')
+    myBtnField.addObject(myDC)
+    state = State()
+
+    def clickHandler(event):
+        render(cubePoint, faces)
+
+    def specHandler(event):
+        for i in range(len(cubePoint)):
+            cubePoint[i] = rotate3D(cubePoint[i], float(state.xValue.get()), 'x')
+            cubePoint[i] = rotate3D(cubePoint[i], float(state.yValue.get()), 'y')
+            cubePoint[i] = rotate3D(cubePoint[i], float(state.zValue.get()), 'z')
+        render(cubePoint, faces)
+
+
+    def App():
+
+        XLable = Lable(Cords([5 * SPACE, 70, 3 * SPACE, 30]), 'input x:')
+        EditXCord = MyEdit(cords=Cords([5 * SPACE, 100, 3 * SPACE, 30]), textvariable=state.xValue)
+
+        YLable = Lable(Cords([9 * SPACE, 70, 3 * SPACE, 30]), 'input y:')
+        EditYCord = MyEdit(cords=Cords([9 * SPACE, 100, 3 * SPACE, 30]), textvariable=state.yValue)
+
+        ZLable = Lable(Cords([13 * SPACE, 70, 3 * SPACE, 30]), 'input z:')
+        EditZCord = MyEdit(cords=Cords([13 * SPACE, 100, 3 * SPACE, 30]), textvariable=state.zValue)
+
+        buttonAdd = Button(Cords([17 * SPACE, 100, 4 * SPACE, 30]), 'addButton', 'Add')
+        buttonAdd.onClick(specHandler)
+
+        myBtnField.addObject(buttonAdd)
+
+        myDC.setOnClick(clickHandler)
+
+        def key(event):
+            print("pressed", repr(event.char))
+
+        def callback(event):
+            myBtnField.clicked(event)
+
+        c.bind("<Key>", key)
+        c.bind("<Button-1>", callback)
+
+    App()
+
+    c.focus_set()
+    c.pack()
+
+fifthLab()
 root.mainloop()
